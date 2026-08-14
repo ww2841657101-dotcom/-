@@ -308,7 +308,11 @@ const TestEngine = {
   },
   update(st) {
     if (st._dead) return;
-    if (!st.intro.done()) { st.intro.tick(); return; }
+    if (!st.intro.done()) {
+      if (!st.intro.running) st.intro.start(); /* intro 在首帧惰性启动：未 start 的 Countdown.tick() 是空操作，会导致永远卡在开场 */
+      st.intro.tick();
+      return;
+    }
     if (!st.running) { st.running = true; st.countdown.start(); }
     if (st.paused) return;
     st.countdown.tick();

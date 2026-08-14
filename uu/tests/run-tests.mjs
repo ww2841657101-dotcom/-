@@ -376,4 +376,27 @@ test('TestEngine.draw 终止后不再渲染多余帧', () => {
   S.TestEngine.draw(st);
 });
 
+// ==== 修复回归：开场倒计时必须推进（intro 未启动会永远卡在 3 秒） ====
+test('TestEngine.update 自动启动并推进 intro，测试正常开始', () => {
+  let t = 0;
+  const clock = () => t;
+  const st = {
+    key: 'grid', t: S.TESTS.grid,
+    ctx: {
+      area: { clientWidth: 1000, clientHeight: 500, classList: { add() {}, remove() {} } },
+      sens: 0.3, dpi: 800, pxPerCm: 37.8,
+    },
+    countdown: new S.Countdown(60000, clock),
+    intro: new S.Countdown(3000, clock), // 与 TestEngine.start 创建时一致：从未被 start()
+    cursor: { x: 500, y: 250 },
+    running: false, paused: false, _dead: false,
+    target: null, samples: [],
+    hits: 0, pops: [], devSamples: [], reactions: [], flashMisses: [], misses: 0, total: 0, fixes: [], lastSpawnT: 0, t0: null,
+  };
+  for (let i = 0; i < 240; i++) { t += 16.7; S.TestEngine.update(st); }
+  assertEq(st.intro.done(), true);    // intro 完成，不卡 3 秒
+  assertEq(st.running, true);         // 已交接给测试计时
+  assertEq(st.target !== null, true); // 测试已开始出靶
+});
+
 summary();
